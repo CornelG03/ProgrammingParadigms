@@ -1,0 +1,85 @@
+// Assignment 4 - Exercise 3: extend the Tree domain by size and sum
+//
+// NOTE: I did not have the course file 03-trees.vpr, so the first part of the
+// domain below is my own standard axiomatisation of binary trees with Int
+// values in the leafs. If you use the file from Teams instead, copy ONLY the
+// block between the two "ADDED" markers into its Tree domain (rename
+// leaf / node there if the file spells the constructors differently).
+//
+// A domain function has no body. Its meaning is given by axioms: one axiom per
+// constructor, exactly like a recursive definition by cases.
+//     size(leaf(v))    = 1                    sum(leaf(v))    = v
+//     size(node(l, r)) = size(l) + size(r)    sum(node(l, r)) = sum(l) + sum(r)
+// The part in { } is the trigger: it tells the SMT solver when to use the axiom.
+
+domain Tree {
+    // constructors
+    function leaf(value: Int): Tree
+    function node(left: Tree, right: Tree): Tree
+
+    // discriminator and destructors
+    function is_leaf(t: Tree): Bool
+    function leaf_value(t: Tree): Int
+    function node_left(t: Tree): Tree
+    function node_right(t: Tree): Tree
+
+    axiom def_is_leaf {
+        forall v: Int :: { leaf(v) } is_leaf(leaf(v))
+    }
+    axiom def_not_is_leaf {
+        forall l: Tree, r: Tree :: { node(l, r) } !is_leaf(node(l, r))
+    }
+    axiom def_leaf_value {
+        forall v: Int :: { leaf(v) } leaf_value(leaf(v)) == v
+    }
+    axiom def_node_left {
+        forall l: Tree, r: Tree :: { node(l, r) } node_left(node(l, r)) == l
+    }
+    axiom def_node_right {
+        forall l: Tree, r: Tree :: { node(l, r) } node_right(node(l, r)) == r
+    }
+    // every tree is either a leaf or a node
+    axiom def_all_trees {
+        forall t: Tree :: { is_leaf(t) }
+            is_leaf(t) ? t == leaf(leaf_value(t))
+                       : t == node(node_left(t), node_right(t))
+    }
+
+    // ======================= ADDED: begin =======================
+    // number of leafs in the tree
+    function size(t: Tree): Int
+
+    axiom size_leaf {
+        forall v: Int :: { size(leaf(v)) } size(leaf(v)) == 1
+    }
+    axiom size_node {
+        forall l: Tree, r: Tree :: { size(node(l, r)) }
+            size(node(l, r)) == size(l) + size(r)
+    }
+
+    // sum of all values stored in the tree
+    function sum(t: Tree): Int
+
+    axiom sum_leaf {
+        forall v: Int :: { sum(leaf(v)) } sum(leaf(v)) == v
+    }
+    axiom sum_node {
+        forall l: Tree, r: Tree :: { sum(node(l, r)) }
+            sum(node(l, r)) == sum(l) + sum(r)
+    }
+    // ======================= ADDED: end =========================
+}
+
+method client() {
+    var t: Tree
+    t := node(
+            node(
+                leaf(3),
+                leaf(17)
+            ),
+            leaf(22)
+         )
+
+    assert sum(t) == 42
+    assert size(t) == 3
+}

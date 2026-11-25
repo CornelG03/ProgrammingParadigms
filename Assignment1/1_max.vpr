@@ -1,0 +1,57 @@
+// Assignment 1 - Exercise 1
+// "Write at least two Viper implementations for the method below that verify.
+//  Try to find one that does NOT compute the maximum."
+//
+// Point of the exercise: the contract only says r >= x and r >= y.
+// It never says that r has to BE x or y, so it is too weak to pin down "max".
+// Anything that is at least as big as both arguments is accepted.
+
+// Implementation 1: the real maximum.
+method max(x: Int, y: Int) returns (r: Int)
+    ensures r >= x
+    ensures r >= y // conjunction of postconditions
+{
+    if (x >= y) {
+        r := x
+    } else {
+        r := y
+    }
+}
+
+// Implementation 2: NOT the maximum (always one bigger than the maximum).
+method max_wrong1(x: Int, y: Int) returns (r: Int)
+    ensures r >= x
+    ensures r >= y
+{
+    if (x >= y) {
+        r := x + 1
+    } else {
+        r := y + 1
+    }
+}
+
+// Implementation 3: NOT the maximum either: |x| + |y|.
+// e.g. x = 3, y = 4 gives 7.
+method max_wrong2(x: Int, y: Int) returns (r: Int)
+    ensures r >= x
+    ensures r >= y
+{
+    var ax: Int := x
+    var ay: Int := y
+    if (x < 0) { ax := 0 - x }
+    if (y < 0) { ay := 0 - y }
+    r := ax + ay
+}
+
+// How to fix the contract so that only the real maximum is accepted:
+method max_strong(x: Int, y: Int) returns (r: Int)
+    ensures r >= x
+    ensures r >= y
+    ensures r == x || r == y   // this line rules out the two "wrong" versions
+{
+    if (x >= y) {
+        r := x
+    } else {
+        r := y
+    }
+}

@@ -1,0 +1,80 @@
+// Assignment 1 - Forward reasoning
+// Replace TODO by the STRONGEST predicate such that the contract verifies.
+//
+// Method: start from what is known (precondition / assume), push it forward
+// through every statement, and write down everything that is known at the end.
+// "Strongest" = it describes exactly the reachable final states, nothing more.
+
+// (a)
+// Known before: 0 <= x <= y < 100.   After z := y - x:  z is exactly y - x.
+// Strongest postcondition: z == y - x.
+// (x and y are parameters and cannot change, so the precondition still holds
+//  for them; together this also gives 0 <= z && z < 100, checked in the client.)
+method a(x: Int, y: Int) returns (z: Int)
+    requires 0 <= x && x <= y && y < 100
+    ensures z == y - x
+{
+    z := y - x
+}
+
+method a_client(x: Int, y: Int)
+    requires 0 <= x && x <= y && y < 100
+{
+    var z: Int
+    z := a(x, y)
+    assert 0 <= z && z < 100   // follows from the strongest postcondition
+}
+
+// (b)
+// Before: 0 <= x < 100, i.e. x in {0, ..., 99}.
+// After x := 2 * x: x is an EVEN number in {0, 2, ..., 198}.
+// Strongest: 0 <= x && x <= 198 && x % 2 == 0
+// (just "0 <= x && x < 200" also verifies but is weaker: it forgets "even").
+method b()
+{
+    var x: Int
+    assume 0 <= x && x < 100
+    x := 2 * x
+    assert 0 <= x && x <= 198 && x % 2 == 0
+}
+
+// (c)
+// Call the initial values x0, y0 with x0 > 0 and x0 < y0.
+//   x := x + 23      ->  x = x0 + 23            so x0 = x - 23,  and x > 23
+//   y := y - 3 * x   ->  y = y0 - 3 * x         so y0 = y + 3 * x
+// Substitute into x0 < y0:   x - 23 < y + 3 * x   <==>   y > -2 * x - 23
+// Strongest: x > 23 && y > -2 * x - 23
+method c() {
+    var x: Int
+    var y: Int
+
+    assume x > 0 && x < y
+
+    x := x + 23
+    y := y - 3 * x
+
+    assert x > 23 && y > -2 * x - 23
+}
+
+// (d)
+// After x := x + 1 we know x > 1.
+//   then-branch (y true):  z is an arbitrary, unconstrained Int, so x + z can
+//                          be ANY integer -> nothing is known about x.
+//   else-branch (y false): x == 42.
+// Strongest: !y ==> x == 42      (same as: y || x == 42)
+method d() {
+    var x: Int
+    var y: Bool
+
+    assume x > 0
+
+    x := x + 1
+    if (y) {
+        var z: Int
+        x := x + z
+    } else {
+        x := 42
+    }
+
+    assert !y ==> x == 42
+}

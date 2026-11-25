@@ -1,0 +1,34 @@
+// Assignment 3 - Exercise 2 (slide "08-..."): multiplication by shifting
+// ("Russian peasant multiplication": halve x, double y, add y when x is odd)
+//
+// Invariant idea: "what is already in res" + "what is still to be done" stays
+// equal to the final answer:
+//       res + x * y == n * m
+//   - before the loop:  res == 0, x == n, y == m   ->  0 + n * m == n * m     ok
+//   - one iteration:
+//        x even:  x == 2 * (x / 2)       ->  res + (x / 2) * (2 * y) == res + x * y
+//        x odd:   x == 2 * (x / 2) + 1   ->  (res + y) + (x / 2) * (2 * y) == res + x * y
+//   - after the loop:   x <= 0 and x >= 0, so x == 0  ->  res == n * m        ok
+// "x >= 0" is needed so that "not (x > 0)" really means x == 0.
+method main() {
+    var n: Int; var m: Int; var res: Int
+
+    assume n >= 0 && m >= 0
+
+    var x: Int := n
+    var y: Int := m
+    res := 0
+
+    while (x > 0)
+        invariant x >= 0
+        invariant res + x * y == n * m
+    {
+        if (x % 2 == 1) {
+            res := res + y
+        }
+        x := x / 2  // right shift
+        y := y * 2  // left shift
+    }
+
+    assert res == n * m
+}

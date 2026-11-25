@@ -1,0 +1,34 @@
+// Assignment 4 - Exercise 1: recursive method sum (0 + 1 + ... + n)
+//
+// Why the specification matters: Viper verifies main() using ONLY the contract
+// of sum, it never looks inside the body. A weak postcondition such as
+// "ensures res >= 0" verifies sum itself, but then "assert r == 55" fails.
+// The postcondition has to say exactly what the result is: the Gauss formula
+// n * (n + 1) / 2.
+//
+// Inside the body, the recursive call is also handled through the contract:
+// we get  res == (n - 1) * n / 2  for free, and adding n gives n * (n + 1) / 2.
+// That is proof by induction, done by the verifier.
+
+import <decreases/int.vpr>      // only needed for the "decreases" line
+
+method sum(n: Int) returns (res: Int)
+    requires n >= 0
+    ensures res == n * (n + 1) / 2
+    decreases n                 // optional: also proves that the recursion terminates
+{
+    if (n == 0) {
+        res := 0
+    } else {
+        res := sum(n - 1)
+        res := res + n
+    }
+}
+
+method main() {
+    var r: Int
+
+    r := sum(10)
+
+    assert r == 55
+}

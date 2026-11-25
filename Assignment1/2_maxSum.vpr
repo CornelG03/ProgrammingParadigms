@@ -1,0 +1,88 @@
+// Assignment 1 - Exercise 2: maxSum and reconstructMaxSum
+
+// ---------------------------------------------------------------------------
+// a) A reasonable contract for maxSum
+// c) ... and its implementation
+// ---------------------------------------------------------------------------
+// First attempt (too weak, see b):
+//     ensures sum == x + y
+//     ensures max >= x && max >= y
+// With only these two lines the assertion "max == 1723" in the client FAILS,
+// because the caller only knows "max >= 1723" (max could be 5000).
+// A caller sees ONLY the contract, never the body. So we add the third line.
+method maxSum(x: Int, y: Int) returns (sum: Int, max: Int)
+    ensures sum == x + y
+    ensures max >= x && max >= y
+    ensures max == x || max == y      // added after testing in b)
+{
+    sum := x + y
+    if (x >= y) {
+        max := x
+    } else {
+        max := y
+    }
+}
+
+// ---------------------------------------------------------------------------
+// b) Client that calls maxSum on 1723 and 42 and tests the contract
+// ---------------------------------------------------------------------------
+method testMaxSum()
+{
+    var s: Int
+    var m: Int
+    s, m := maxSum(1723, 42)
+    assert s == 1765
+    assert m == 1723      // fails with the weak contract, passes with the improved one
+}
+
+// ---------------------------------------------------------------------------
+// d) Abstract method (no body) specifying reconstructMaxSum
+// ---------------------------------------------------------------------------
+// "x and y are numbers that maxSum would turn into (sum, max)".
+// Without a precondition this specification CANNOT be implemented:
+// take sum = 0, max = -1. Both x and y must be <= -1, so x + y <= -2, never 0.
+method reconstructMaxSum_abstract(sum: Int, max: Int) returns (x: Int, y: Int)
+    ensures x + y == sum
+    ensures max >= x && max >= y
+    ensures max == x || max == y
+
+// ---------------------------------------------------------------------------
+// e) Implementation - only possible after adding a precondition
+// ---------------------------------------------------------------------------
+// The other number is sum - max, and it must not be bigger than max:
+//     sum - max <= max   <==>   sum <= 2 * max
+method reconstructMaxSum(sum: Int, max: Int) returns (x: Int, y: Int)
+    requires sum <= 2 * max
+    ensures x + y == sum
+    ensures max >= x && max >= y
+    ensures max == x || max == y
+{
+    x := max
+    y := sum - max
+}
+
+// ---------------------------------------------------------------------------
+// f) Client testing reconstructMaxSum
+// ---------------------------------------------------------------------------
+method testReconstruct()
+{
+    var x: Int
+    var y: Int
+    x, y := reconstructMaxSum(1765, 1723)
+    // the order of x and y cannot be recovered, only the two values
+    assert (x == 1723 && y == 42) || (x == 42 && y == 1723)
+}
+
+// Round trip for ARBITRARY inputs: maxSum followed by reconstructMaxSum
+// gives back the original two numbers (possibly swapped).
+// Note the precondition "sum <= 2 * max" is proven from maxSum's postcondition.
+method testRoundTrip(a: Int, b: Int)
+{
+    var s: Int
+    var m: Int
+    var x: Int
+    var y: Int
+    s, m := maxSum(a, b)
+    x, y := reconstructMaxSum(s, m)
+    assert (x == a && y == b) || (x == b && y == a)
+}

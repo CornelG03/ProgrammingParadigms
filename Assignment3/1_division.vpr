@@ -1,0 +1,32 @@
+// Assignment 3 - Exercise 1 (slide "07-..."): division by repeated subtraction
+// Computes res = M / N (quotient) and m = M % N (remainder).
+//
+// How to find the invariant: look at the final assert and ask
+// "which part of it is already true in the MIDDLE of the loop?"
+// Here the whole assert  M == res * N + m  is true all the time:
+//   - before the loop:  m == M, res == 0           ->  M == 0 * N + M          ok
+//   - one iteration:    m' = m - N, res' = res + 1 ->  (res + 1) * N + (m - N)
+//                                                      = res * N + m = M       ok
+// "m >= 0" is not needed for the assert, but it is also invariant and together
+// with the exit condition (m < N) it says that m really is the remainder.
+method main() {
+    var M: Int
+    var N: Int
+    var res: Int
+
+    assume N > 0 && M >= 0
+
+    var m: Int := M
+    res := 0
+
+    while (m >= N)
+        invariant M == res * N + m
+        invariant m >= 0
+    {
+        m := m - N
+        res := res + 1
+    }
+
+    assert M == res * N + m
+    assert 0 <= m && m < N      // extra: m is a proper remainder
+}

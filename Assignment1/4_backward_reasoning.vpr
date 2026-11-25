@@ -1,0 +1,99 @@
+// Assignment 1 - Backward reasoning
+// Replace TODO by the WEAKEST predicate such that the contract verifies.
+//
+// Method: start from the postcondition / assert and walk BACKWARDS.
+// For an assignment "v := e" replace v by e in the condition (substitution).
+// For "if (b) {S1} else {S2}":  (b ==> wp(S1)) && (!b ==> wp(S2)).
+// "Weakest" = allows as many start states as possible.
+
+// (a)  This is the "swap without a temporary variable" trick.
+// Go backwards from  X == y && Y == x:
+//   X := Y + X       ->  Y + X == y && Y == x
+//   Y := y - X       ->  (y - X) + X == y && y - X == x   =  y - X == x
+//   X := y - x       ->  y - (y - x) == x                 =  true
+// Weakest precondition: true  (it works for all inputs)
+method a(x: Int, y: Int) returns (X: Int, Y: Int)
+    requires true
+    ensures X == y && Y == x
+{
+    X := y - x
+    Y := y - X
+    X := Y + X
+}
+
+// (b)
+// Go backwards from  x > y:
+//   y := x * y   ->  x > x * y
+//   x := x + y   ->  x + y > (x + y) * y
+// That is already the weakest precondition. Simplified:
+//   (x + y) * (1 - y) > 0
+//   <==> (y < 1 && x + y > 0) || (y > 1 && x + y < 0)
+// i.e. (y <= 0 && x > -y) || (y >= 2 && x < -y)
+method b() {
+
+    var x: Int
+    var y: Int
+
+    assume (y < 1 && x + y > 0) || (y > 1 && x + y < 0)
+
+    x := x + y
+    y := x * y
+
+    assert x > y
+}
+
+// Same thing with the unsimplified formula (what substitution gives directly).
+method b_unsimplified() {
+
+    var x: Int
+    var y: Int
+
+    assume x + y > (x + y) * y
+
+    x := x + y
+    y := x * y
+
+    assert x > y
+}
+
+// (c)
+// Go backwards from  x > 7:
+//   then-branch: y := x - y   does not touch x  ->  x > 7
+//   else-branch: x := y - x                     ->  y - x > 7
+// Weakest: (y > 5 ==> x > 7) && (y <= 5 ==> y - x > 7)
+// Equivalent: (y > 5 && x > 7) || (y <= 5 && x < y - 7)
+method c() {
+    var x: Int
+    var y: Int
+
+    assume (y > 5 ==> x > 7) && (y <= 5 ==> y - x > 7)
+
+    if (y > 5) {
+        y := x - y
+    } else {
+        x := y - x
+    }
+
+    assert x > 7
+}
+
+// (d)
+// Three paths:
+//   x < 17 && x > 3   -> y := 1   -> 1 % 2 == 0 is FALSE  -> must be excluded
+//   x < 17 && x <= 3  -> y := 2   -> fine
+//   x >= 17           -> y := 6   -> fine
+// Weakest: !(3 < x && x < 17), i.e.  x <= 3 || x >= 17
+method d(x: Int) returns (y: Int)
+    requires x <= 3 || x >= 17
+    ensures y % 2 == 0
+{
+    if (x < 17) {
+        if (x > 3) {
+            y := 1
+        } else {
+            y := 2
+        }
+    } else {
+        y := 6
+    }
+}

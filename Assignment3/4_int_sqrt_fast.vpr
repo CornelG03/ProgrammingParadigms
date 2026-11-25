@@ -1,0 +1,32 @@
+// Assignment 3 - Exercise 4: faster integer square root
+//
+// Same idea as before, but instead of recomputing (res + 1) * (res + 1) in
+// every iteration, the variable x carries that value along.
+// So the invariant must say what x means:
+//       x == (res + 1) * (res + 1)
+// and, as in exercise 3:
+//       res * res <= n
+//   - before the loop: res == 0, x == 1 == (0 + 1) * (0 + 1), 0 <= n          ok
+//   - one iteration:
+//       x' = x + 2 * res + 3 = (res + 1)^2 + 2 * res + 3 = (res + 2)^2
+//          = (res' + 1)^2   because res' = res + 1                            ok
+//       res' * res' = (res + 1)^2 = x (old) < n   (loop condition)            ok
+//   - after the loop: x >= n, i.e. n <= (res + 1) * (res + 1)                 ok
+method int_sqrt_fast() {
+    var n: Int
+    assume n >= 0
+
+    var res: Int
+
+    res := 0
+    var x: Int := 1
+    while (x < n)
+        invariant x == (res + 1) * (res + 1)
+        invariant res * res <= n
+    {
+        x := x + 2 * res + 3
+        res := res + 1
+    }
+
+    assert res * res <= n && n <= (res + 1) * (res + 1)
+}

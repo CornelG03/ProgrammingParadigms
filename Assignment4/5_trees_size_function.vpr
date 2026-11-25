@@ -1,0 +1,79 @@
+// Assignment 4 - Exercise 5: size as a recursive Viper FUNCTION with a postcondition
+//
+// NOTE: I did not have the course file 10-trees.vpr, so the Tree domain below
+// is my own. If you use the file from Teams, copy ONLY the function "size"
+// (the block between the "ADDED" markers) and rename is_leaf / node_left /
+// node_right to the names used in that file.
+//
+// Difference to exercise 3: there, size was a domain function described by
+// axioms. Here it is a normal function with a body, defined by recursion over
+// the tree, so we can give it a postcondition.
+//
+// Postcondition: result >= 1  (every tree has at least one leaf), which
+// implies the client's "size(t) >= 0".
+// Why it verifies: when checking the body, Viper may assume the postcondition
+// for the recursive calls (induction):
+//     leaf:  result == 1                          >= 1
+//     node:  result == size(left) + size(right)   >= 1 + 1 >= 1
+// The client then needs NO unfolding of the definition, the postcondition
+// alone gives size(t) >= 0 for any tree.
+// ("ensures result >= 0" would also be enough for the client and verifies in
+//  the same way; ">= 1" is simply the stronger, more precise statement.)
+
+domain Tree {
+    // constructors
+    function leaf(value: Int): Tree
+    function node(left: Tree, right: Tree): Tree
+
+    // discriminator and destructors
+    function is_leaf(t: Tree): Bool
+    function leaf_value(t: Tree): Int
+    function node_left(t: Tree): Tree
+    function node_right(t: Tree): Tree
+
+    axiom def_is_leaf {
+        forall v: Int :: { leaf(v) } is_leaf(leaf(v))
+    }
+    axiom def_not_is_leaf {
+        forall l: Tree, r: Tree :: { node(l, r) } !is_leaf(node(l, r))
+    }
+    axiom def_leaf_value {
+        forall v: Int :: { leaf(v) } leaf_value(leaf(v)) == v
+    }
+    axiom def_node_left {
+        forall l: Tree, r: Tree :: { node(l, r) } node_left(node(l, r)) == l
+    }
+    axiom def_node_right {
+        forall l: Tree, r: Tree :: { node(l, r) } node_right(node(l, r)) == r
+    }
+    axiom def_all_trees {
+        forall t: Tree :: { is_leaf(t) }
+            is_leaf(t) ? t == leaf(leaf_value(t))
+                       : t == node(node_left(t), node_right(t))
+    }
+}
+
+// ======================= ADDED: begin =======================
+function size(t: Tree): Int
+    ensures result >= 1
+{
+    is_leaf(t) ? 1 : size(node_left(t)) + size(node_right(t))
+}
+// ======================= ADDED: end =========================
+
+method client() {
+    var t: Tree
+    t := node(node(leaf(3), leaf(17)), leaf(22))
+    assert size(t) >= 0
+}
+
+// extra: the definition also computes the right number
+method client2() {
+    var t: Tree
+    t := node(node(leaf(3), leaf(17)), leaf(22))
+    // Viper unfolds a recursive function only one level per mention, so we
+    // help it by mentioning the sub-trees first
+    assert size(leaf(3)) == 1 && size(leaf(17)) == 1 && size(leaf(22)) == 1
+    assert size(node(leaf(3), leaf(17))) == 2
+    assert size(t) == 3
+}

@@ -1,0 +1,27 @@
+// Assignment 3 - Exercise 3: integer square root
+//
+// The final assert has two halves:
+//    res * res <= n              <- NOT given by the loop condition, so it must
+//                                   come from the invariant
+//    n <= (res + 1) * (res + 1)  <- exactly the negated loop condition, free
+// Invariant: res * res <= n
+//   - before the loop: res == 0, 0 <= n                                       ok
+//   - one iteration: the loop condition says (res + 1) * (res + 1) < n, and
+//     res' = res + 1, so res' * res' < n, in particular <= n                  ok
+// ("res >= 0" is also true all the time; it is not required for the proof.)
+method int_sqrt() {
+    var n: Int
+    assume n >= 0
+
+    var res: Int
+
+    res := 0
+    while ((res + 1) * (res + 1) < n)
+        invariant res >= 0
+        invariant res * res <= n
+    {
+        res := res + 1
+    }
+
+    assert res * res <= n && n <= (res + 1) * (res + 1)
+}
